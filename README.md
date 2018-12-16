@@ -40,7 +40,7 @@ Furthermore, 1x1 convolutions are able to reduce the number of channels in an in
 
 The final tuned model architecture for Model 2 is as depicted below: 
 
-![cnn_architecture](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/Model-1/cnn_architecture_unsup.png)
+![cnn_architecture](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/cnn_architecture_unsup.png)
 
 Correct Usage
 =========================
@@ -77,7 +77,7 @@ Filter Visualization (0th Layer)
 
 The filters of the 0th convolutional layer in CNNs (applied to the raw input images) are often "human-interpretable" and have patterns that are easy to correlate with patterns of the input images. Both Model 1 and Model 2 learn the same number of filters (256) in the same manner via K-Means for the 0th layer. Examine a visualization of these filters in the grid below:
 
-![filters_unsup](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/filters_unsup.png)
+![filters_unsup](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/filters_unsup.png)
 
 *Note: Many patches appear to have patterns from the higher-intensity, brightly yellow-colored areas of the spectrogram containing a right whale upcall. Note, however, that K-Means learned filters using an equal number of samples from the positive class (right whalle upcall) and negative class (ambient noise), resulting in patches representative of both types of images. (Including samples from both classes, as opposed to just including samples from the positive class, was found to boost classifier performance). Therefore, the brightly-colored areas of the filters could be interpreted as either high-intensity regions corresponding to an upcall, or high-intensity regions corresponding to blips of random noise.* 
 
@@ -88,7 +88,7 @@ Model 1 was trained for 17 epochs and a batch size of 100 on a training set of 8
 
 - ROC-AUC Score vs Epoch (Graph)
 
-![AUC-Epoch_ModelUnsup1](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/Model-1/AUC-Epoch_ModelUnsup1.png)
+![AUC-Epoch_ModelUnsup1](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/AUC-Epoch_ModelUnsup1.png)
 
 - ROC-AUC Score vs Epoch (Table)
 
@@ -118,19 +118,19 @@ ROC Curves for Model 1
 ------
 
 - Training Set ROC Curve vs Test Set ROC Curve
-![ROC_ModelUnsup1_BP](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/Model-1/ROC_ModelUnsup1_BP.png)
+![ROC_ModelUnsup1_BP](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/ROC_ModelUnsup1_BP.png)
 
 *Note: Predictions on the test set are made using the union of the predictions on the vertically-enhanced spectrograms and horizontally-enhanced spectrograms (BP=Both Predictions).*
 
 - Test Set ROC Curves
 
-![ROC_ModelUnsup1_TestOnly](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/Model-1/ROC_ModelUnsup1_TestOnly.png)
+![ROC_ModelUnsup1_TestOnly](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/ROC_ModelUnsup1_TestOnly.png)
 
 *Note: The three curves represent predictions only on the vertically-enhanced spectrograms in the test set (VP=Vertically-Enhanced Predictions, predictions only on the horizontally-enhanced spectrograms in the test set (HP=Horizontally-Enhanced Predictions), and the union of the predictions on both types of images (BP=Both Predictions).*
 
 - Training Set ROC Curve vs Test Set ROC Curves
 
-![ROC_ModelUnsup1_All](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/Model-1/ROC_ModelUnsup1_All.png)
+![ROC_ModelUnsup1_All](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/ROC_ModelUnsup1_All.png)
 
 Results of Training for Model 2
 =========================
@@ -139,7 +139,7 @@ Model 2 was trained for 16 epochs and a batch size of 100 on a training set of 8
 
 - ROC-AUC Score vs Epoch (Graph)
 
-![AUC-Epoch_ModelUnsup2](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/Model-2/AUC-Epoch_ModelUnsup2.png)
+![AUC-Epoch_ModelUnsup2](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/AUC-Epoch_ModelUnsup2.png)
 
 - ROC-AUC Score vs Epoch (Table)
 
@@ -168,24 +168,24 @@ ROC Curves for Model 2
 ------
 
 - Training Set ROC Curve vs Test Set ROC Curve
-![ROC_ModelUnsup2_BP](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/Model-2/ROC_ModelUnsup2_BP.png)
+![ROC_ModelUnsup2_BP](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/ROC_ModelUnsup2_BP.png)
 
 *Note: Predictions on the test set are made using the union of the predictions on the vertically-enhanced spectrograms and horizontally-enhanced spectrograms (BP=Both Predictions).*
 
 - Test Set ROC Curves
 
-![ROC_ModelUnsup2_TestOnly](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/Model-2/ROC_ModelUnsup2_TestOnly.png)
+![ROC_ModelUnsup2_TestOnly](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/ROC_ModelUnsup2_TestOnly.png)
 
 *Note: The three curves represent predictions only on the vertically-enhanced spectrograms in the test set (VP=Vertically-Enhanced Predictions, predictions only on the horizontally-enhanced spectrograms in the test set (HP=Horizontally-Enhanced Predictions), and the union of the predictions on both types of images (BP=Both Predictions).*
 
 - Training Set ROC Curve vs Test Set ROC Curves
 
-![ROC_ModelUnsup2_All](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/Model-2/ROC_ModelUnsup2_All.png)
+![ROC_ModelUnsup2_All](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/ROC_ModelUnsup2_All.png)
 
 All Models: ROC-AUC Scores vs Epoch
 =========================
 
-![AUC-Epoch_All](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network/blob/master/Unsupervised-Learning/Images/AUC-Epoch_All.png)
+![AUC-Epoch_All](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/AUC-Epoch_All.png)
 
 *Note: The three curves represent the ROC-AUC scores vs epoch for the supervised CNN, the unsupervised CNN using energy-correlated receptive field grouping, and the unsupervised CNN using 1x1 convolution dimensionality reduction, respectively.*
 
