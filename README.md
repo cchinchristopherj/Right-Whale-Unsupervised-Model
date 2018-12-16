@@ -1,19 +1,25 @@
 Whale Convolutional Neural Network (Unsupervised)
 =========================
 
-Convolutional Neural Network to Recognize Right Whale Upcalls via Filters Learned Through K-Means
+Convolutional Neural Network to Recognize Right Whale Upcalls (Unsupervised Learning of Filters)
 
-Tackles the same [challenge](https://www.kaggle.com/c/the-icml-2013-whale-challenge-right-whale-redux) and uses the same [dataset](https://www.kaggle.com/c/the-icml-2013-whale-challenge-right-whale-redux/data) as the supervised CNN model. 
+Tackles the same [challenge](https://www.kaggle.com/c/the-icml-2013-whale-challenge-right-whale-redux) and uses the same [dataset](https://www.kaggle.com/c/the-icml-2013-whale-challenge-right-whale-redux/data) as the Baseline Model. 
 
 Due to expert annotation being an expensive process, unsupervised learning holds great potential for the development of more robust classification models - its speed (in the case of K-Means-like algorithms) and ability to learn abstract, generalized features from readily available unlabeled data make it a powerful tool for future monitoring systems. 
 
 In order to potentially improve the performance of the baseline (supervised) CNN model, the weights of the convolutional filters will be learned unsupervised instead of through standard backpropagation and gradient descent. Concretely, K-Means Clustering, an approach that clusters data into groups, the members of which bear a strong similarity with one another based on a specified distance metric, will be used to identify optimum filters. 
 
-The rationale for K-Means Clustering being a viable alternative for feature learning can be traced back to the basic operation of a convolutional filter. The filters below, for example, are useful for edge detection.
+The rationale for K-Means Clustering being a viable alternative for feature learning can be traced back to the basic operation of a convolutional filter. The filters below, for example, are useful for edge detection:
+
+![edge_detector](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/edge_detector.png)
 
 Recall that a convolution operation involves computing "matrix dot products" (elementwise multiplications and summations) between patches of an input feature map (or feature map volume) and a learned convolutional filter. If a 3x3 learned convolutional filter contains large magnitude values in the top and bottom row and 0s in the middle row, it will be able to "detect" horizontal edges (since large magnitude values would result from the elementwise multiplication between the top and/or bottom row of the filter and horizontal edges in the input image patches). Essentially, therefore, convolutional filters in fact perform cross-correlation, measuring the similarity between two matrices A and B as a function of the displacement of A relative to B. (It can be mathematically proven that the only difference between convolution and cross-correlation is the “flipping” of B relative to A in the relevant equations). 
 
-Centroids learned by K-Means Clustering can therefore be interpreted as characteristic sets of features of samples in the dataset. Reinterpreted as convolutional filters, these centroids can be cross-correlated (or convolved) with input images to determine whether or not they contain these characteristic features, with the output of the convolution operation being "match scores" indicating the degree of similarity between the patches in the input images and the representative centroids. A neural network can use these match scores to discriminate between the classes of interest.
+Centroids learned by K-Means Clustering can therefore be interpreted as characteristic sets of features of samples in the dataset. 
+
+![kmeans](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/kmeans.png)
+
+Reinterpreted as convolutional filters, these centroids can be cross-correlated (or convolved) with input images to determine whether or not they contain these characteristic features, with the output of the convolution operation being "match scores" indicating the degree of similarity between the patches in the input images and the representative centroids. A neural network can use these match scores to discriminate between the classes of interest.
 
 There is, however, one large shortcoming to K-Means Clustering: as the dimensionality of the inputs increases, the algorithm requires larger and larger amounts of data to identify representative centroids. One author for example found that using K-Means on 5,000,000 patches of size (64,64), i.e. an input dimensionality of 64x64=4096, yielded sub-optimal results: many clusters were empty or comprised of only a few samples, meaning that algorithm failed to capture centroids representative of features in the dataset. The author found empirically that, given the same number of patches, performance of the algorithm improved when the patches’ input dimensionalities were reduced by an order of magnitude to the hundreds (such as sizes of (6x6) or (8x8)) instead of the thousands. 
 
@@ -28,12 +34,20 @@ Model 1 (Energy-Correlated Receptive Fields Grouping)
 
 Several authors have handled this shortcoming of K-Means by randomly creating smaller groups of feature maps from the entire feature map volume and passing these groups of reduced dimensionality to the K-Means algorithm to learn representative centroids. These groups can be created randomly or through a pairwise similarity metric such as squared-energy correlation. (Squared-energy correlation is used rather than correlation because the inputs are, as per convention, already linearly-uncorrelated via PCA). In this approach, a similarity matrix is created where each (j,k) element represents the squared energy correlation between the j-th and k-th individual feature map in the entire feature map volume. 
 
-Groups of group size G can be created by selecting N random rows (N random feature maps) in the similarity matrix. For each of these rows, one can select the G elements with the highest values (corresponding to the feature maps with the strongest correlation) and thereby form N groups of size G. These groups of reduced dimensionality can then be given to the K-Means algorithm to learn representative centroids. The authors of the approach noted that applying K-Means to these correlated groups, rather than random groups, resulted in better classifier performance: since feature maps that respond similarly are grouped together, the algorithm is now able to even more finely model the patterns and structures they are responding together to in the images. 
+Groups of group size G can be created by selecting N random rows (N random feature maps) in the similarity matrix. For each of these rows, one can select the G elements with the highest values (corresponding to the feature maps with the strongest correlation) and thereby form N groups of size G. 
+
+![receptive_field_group](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/receptive_field_group.jpeg)
+
+These groups of reduced dimensionality can then be given to the K-Means algorithm to learn representative centroids. The authors of the approach noted that applying K-Means to these correlated groups, rather than random groups, resulted in better classifier performance: since feature maps that respond similarly are grouped together, the algorithm is now able to even more finely model the patterns and structures they are responding together to in the images. 
 
 Model 2 (1x1 Convolution Dimensionality Reduction)
 =========================
 
 Unlike conventional convolutional filters that have receptive fields covering entire patches in each channel of an input, (1x1) convolutional filters have a receptive field of one pixel in each channel, thereby precluding their ability to learn features in local areas. These filters therefore operate in a fundamentally different way, a way that in fact mirrors the operation of fully-connected layers.
+
+![1x1conv](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/1x1conv.png)
+
+![1x1_conv_cost](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/1x1_conv_cost.png)
 
 Using 1x1 filters can be thought of as sliding a fully-connected layer with n nodes from left to right and top to bottom across the image, as each operation in each position yields n values (just as to be expected for the output of a fully-connected layer with n nodes). Since (1x1) convolutions act like fully-connected layers, they allow a model to learn not only additional function mappings, but additional nonlinear function mappings if nonlinear activation functions are used.
 Furthermore, 1x1 convolutions are able to reduce the number of channels in an input, in essence summarizing or pooling information across the channels into one feature map. (1x1) convolutional filters are therefore an extremely effective and parameter-efficient means of reducing input dimensionality, and are used in this model to help K-Means learn effective filters for the second convolutional layer.
