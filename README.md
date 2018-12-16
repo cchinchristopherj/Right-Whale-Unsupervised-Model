@@ -13,7 +13,7 @@ The rationale for K-Means Clustering being a viable alternative for feature lear
 
 ![edge_detector](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/edge_detector.png)
 
-*Vertical and Horizontal Edge Detector Convolutional Filters. Image Source: [Optimization of Processor Architecture for Image Edge Detection Filter](Optimization of Processor Architecture for Image Edge Detection Filter)*
+*Vertical and Horizontal Edge Detector Convolutional Filters. Image Source: [Optimization of Processor Architecture for Image Edge Detection Filter](https://www.semanticscholar.org/paper/Optimization-of-Processor-Architecture-for-Image-Osman-Hussin/4c694c500c1394918e437d9259fd10d8df3d9372)*
 
 Recall that a convolution operation involves computing "matrix dot products" (elementwise multiplications and summations) between patches of an input feature map (or feature map volume) and a learned convolutional filter. If a 3x3 learned convolutional filter contains large magnitude values in the top and bottom row and 0s in the middle row, it will be able to "detect" horizontal edges (since large magnitude values would result from the elementwise multiplication between the top and/or bottom row of the filter and horizontal edges in the input image patches). Essentially, therefore, convolutional filters in fact perform cross-correlation, measuring the similarity between two matrices A and B as a function of the displacement of A relative to B. (It can be mathematically proven that the only difference between convolution and cross-correlation is the “flipping” of B relative to A in the relevant equations). 
 
