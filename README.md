@@ -1,9 +1,9 @@
-Whale Convolutional Neural Network (Unsupervised)
+Right Whale Detection Challenge Part II
 =========================
 
 Convolutional Neural Network to Recognize Right Whale Upcalls (Unsupervised Learning of Filters)
 
-Tackles the same [challenge](https://www.kaggle.com/c/the-icml-2013-whale-challenge-right-whale-redux) and uses the same [dataset](https://www.kaggle.com/c/the-icml-2013-whale-challenge-right-whale-redux/data) as the Baseline Model. 
+Tackles the same [challenge](https://www.kaggle.com/c/the-icml-2013-whale-challenge-right-whale-redux) and uses the same [dataset](https://www.kaggle.com/c/the-icml-2013-whale-challenge-right-whale-redux/data) as the Baseline Model in [Right Whale Detection Challenge Part I](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network)
 
 Due to expert annotation being an expensive process, unsupervised learning holds great potential for the development of more robust classification models - its speed (in the case of K-Means-like algorithms) and ability to learn abstract, generalized features from readily available unlabeled data make it a powerful tool for future monitoring systems. 
 
@@ -13,11 +13,15 @@ The rationale for K-Means Clustering being a viable alternative for feature lear
 
 ![edge_detector](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/edge_detector.png)
 
+*Vertical and Horizontal Edge Detector Convolutional Filters. Image Source: [Optimization of Processor Architecture for Image Edge Detection Filter](Optimization of Processor Architecture for Image Edge Detection Filter)*
+
 Recall that a convolution operation involves computing "matrix dot products" (elementwise multiplications and summations) between patches of an input feature map (or feature map volume) and a learned convolutional filter. If a 3x3 learned convolutional filter contains large magnitude values in the top and bottom row and 0s in the middle row, it will be able to "detect" horizontal edges (since large magnitude values would result from the elementwise multiplication between the top and/or bottom row of the filter and horizontal edges in the input image patches). Essentially, therefore, convolutional filters in fact perform cross-correlation, measuring the similarity between two matrices A and B as a function of the displacement of A relative to B. (It can be mathematically proven that the only difference between convolution and cross-correlation is the “flipping” of B relative to A in the relevant equations). 
 
 Centroids learned by K-Means Clustering can therefore be interpreted as characteristic sets of features of samples in the dataset. 
 
 ![kmeans](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/kmeans.png)
+
+*K-Means Clustering Algorithm Identifies K Centroids Corresponding to Clusters in the Dataset. Image Source: [K Means Clustering: Identifying F.R.I.E.N.D.S in the World of Strangers](https://towardsdatascience.com/k-means-clustering-identifying-f-r-i-e-n-d-s-in-the-world-of-strangers-695537505d)*
 
 Reinterpreted as convolutional filters, these centroids can be cross-correlated (or convolved) with input images to determine whether or not they contain these characteristic features, with the output of the convolution operation being "match scores" indicating the degree of similarity between the patches in the input images and the representative centroids. A neural network can use these match scores to discriminate between the classes of interest.
 
@@ -32,29 +36,129 @@ In this application, two different approaches for dimensionality reduction will 
 Model 1 (Energy-Correlated Receptive Fields Grouping)
 =========================
 
-Several authors have handled this shortcoming of K-Means by randomly creating smaller groups of feature maps from the entire feature map volume and passing these groups of reduced dimensionality to the K-Means algorithm to learn representative centroids. These groups can be created randomly or through a pairwise similarity metric such as squared-energy correlation. (Squared-energy correlation is used rather than correlation because the inputs are, as per convention, already linearly-uncorrelated via PCA). In this approach, a similarity matrix is created where each (j,k) element represents the squared energy correlation between the j-th and k-th individual feature map in the entire feature map volume. 
+Several authors have handled this shortcoming of K-Means by randomly creating smaller groups of feature maps from the entire feature map volume and passing these groups of reduced dimensionality to the K-Means algorithm to learn representative centroids. 
+
+![k_means_grouping](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/k_means_grouping.png)
+
+*Feature Map Grouping for Filter Learning via K-Means. Image Source: [An Analysis of the Connections Between Layers in Deep Neural Networks](https://arxiv.org/pdf/1306.0152.pdf)*
+
+These groups can be created randomly or through a pairwise similarity metric such as squared-energy correlation. (Squared-energy correlation is used rather than correlation because the inputs are, as per convention, already linearly-uncorrelated via PCA). In this approach, a similarity matrix is created where each (j,k) element represents the squared energy correlation between the j-th and k-th individual feature map in the entire feature map volume. 
 
 Groups of group size G can be created by selecting N random rows (N random feature maps) in the similarity matrix. For each of these rows, one can select the G elements with the highest values (corresponding to the feature maps with the strongest correlation) and thereby form N groups of size G. 
 
+These groups of reduced dimensionality can then be given to the K-Means algorithm to learn representative centroids. 
+
 ![receptive_field_group](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/receptive_field_group.jpeg)
 
-These groups of reduced dimensionality can then be given to the K-Means algorithm to learn representative centroids. The authors of the approach noted that applying K-Means to these correlated groups, rather than random groups, resulted in better classifier performance: since feature maps that respond similarly are grouped together, the algorithm is now able to even more finely model the patterns and structures they are responding together to in the images. 
+*Example of a Group Chosen using the Squared-Energy Correlation Metric, demonstrating the elements' similarity in orientation but difference in phase and frequency. Image Source: [Selecting Receptive Fields in Deep Networks](http://robotics.stanford.edu/~ang/papers/nips11-SelectingReceptiveFields.pdf)*
+
+The authors of the approach noted that applying K-Means to these correlated groups, rather than random groups, resulted in better classifier performance: since feature maps that respond similarly are grouped together, the algorithm is now able to even more finely model the patterns and structures they are responding together to in the images. 
 
 Model 2 (1x1 Convolution Dimensionality Reduction)
 =========================
 
 Unlike conventional convolutional filters that have receptive fields covering entire patches in each channel of an input, (1x1) convolutional filters have a receptive field of one pixel in each channel, thereby precluding their ability to learn features in local areas. These filters therefore operate in a fundamentally different way, a way that in fact mirrors the operation of fully-connected layers.
 
+Using 1x1 filters can be thought of as sliding a fully-connected layer with n nodes from left to right and top to bottom across the image, as each operation in each position yields n values (just as to be expected for the output of a fully-connected layer with n nodes). 
+
 ![1x1conv](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/1x1conv.png)
+
+*1x1 Convolution with 32 filters can be conceptualized as sliding a fully-connected layer with 32 nodes across the input feature map volume, producing 32 values in each position. Image Source: [Lecture 5: Convolutional Neural Networks](http://cs231n.stanford.edu/slides/2018/cs231n_2018_lecture05.pdf)*
+
+Since (1x1) convolutions act like fully-connected layers, they allow a model to learn not only additional function mappings, but additional nonlinear function mappings if nonlinear activation functions are used.
+
+Furthermore, 1x1 convolutions are able to reduce the number of channels in an input, in essence summarizing or pooling information across the channels into one feature map. (1x1) convolutional filters are therefore an extremely effective and parameter-efficient means of reducing input dimensionality, and are used in this model to help K-Means learn effective filters for the second convolutional layer.
 
 ![1x1_conv_cost](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/1x1_conv_cost.png)
 
-Using 1x1 filters can be thought of as sliding a fully-connected layer with n nodes from left to right and top to bottom across the image, as each operation in each position yields n values (just as to be expected for the output of a fully-connected layer with n nodes). Since (1x1) convolutions act like fully-connected layers, they allow a model to learn not only additional function mappings, but additional nonlinear function mappings if nonlinear activation functions are used.
-Furthermore, 1x1 convolutions are able to reduce the number of channels in an input, in essence summarizing or pooling information across the channels into one feature map. (1x1) convolutional filters are therefore an extremely effective and parameter-efficient means of reducing input dimensionality, and are used in this model to help K-Means learn effective filters for the second convolutional layer.
+*By incorporating a 1x1 Convolutional "Bottleneck" Layer to perform dimensionality reduction through channel pooling, the total computational cost of the desired 5x5 filter convolution operation is reduced significantly due to fewer required parameters. Image Source: [DeepLearning series: Convolutional Neural Networks](https://medium.com/machine-learning-bites/deeplearning-series-convolutional-neural-networks-a9c2f2ee1524)*
 
 The final tuned model architecture for Model 2 is as depicted below: 
 
 ![cnn_architecture](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/cnn_architecture_unsup.png)
+
+Results of Training for Model 1
+=========================
+
+Model 1 was trained for 17 epochs and a batch size of 100 on a training set of 84000 audio files (42000 vertically-enhanced spectrograms and 42000 horizontally-enhanced spectrograms). Training took approximately 4 hours on a Tesla K80 GPU (via FloydHub Cloud Service). The test set consisted of 10000 audio files (5000 vertically-enhanced spectrograms and 5000 horizontally-enhanced spectrograms). The loss and accuracy of the training set, and ROC-AUC score of the test set, are evaluated by Keras for every epoch during training and depicted below. The final ROC-AUC score for the training set after 17 epochs was found to be 94.14%, while the ROC-AUC score for the test set was found to be 93.13%.
+
+**Test ROC_AUC Score = 0.9313**
+
+ROC Curves for Model 1
+------
+
+- Training Set ROC Curve vs Test Set ROC Curve
+![ROC_ModelUnsup1_BP](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/ROC_ModelUnsup1_BP.png)
+
+*Note: Predictions on the test set are made using the union of the predictions on the vertically-enhanced spectrograms and horizontally-enhanced spectrograms (BP=Both Predictions).*
+
+- Test Set ROC Curves
+
+![ROC_ModelUnsup1_TestOnly](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/ROC_ModelUnsup1_TestOnly.png)
+
+*Note: The three curves represent predictions only on the vertically-enhanced spectrograms in the test set (VP=Vertically-Enhanced Predictions, predictions only on the horizontally-enhanced spectrograms in the test set (HP=Horizontally-Enhanced Predictions), and the union of the predictions on both types of images (BP=Both Predictions).*
+
+- Training Set ROC Curve vs Test Set ROC Curves
+
+![ROC_ModelUnsup1_All](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/ROC_ModelUnsup1_All.png)
+
+Results of Training for Model 2
+=========================
+
+Model 2 was trained for 16 epochs and a batch size of 100 on a training set of 84000 audio files (42000 vertically-enhanced spectrograms and 42000 horizontally-enhanced spectrograms). Training took approximately 50 minutes on a Tesla K80 GPU (via FloydHub Cloud Service). The test set consisted of 10000 audio files (5000 vertically-enhanced spectrograms and 5000 horizontally-enhanced spectrograms). The loss and accuracy of the training set, and ROC-AUC score of the test set, are evaluated by Keras for every epoch during training and depicted below. The final ROC-AUC score for the training set after 16 epochs was found to be 96.07%, while the ROC-AUC score for the test set was found to be 95.97%.
+
+**Test ROC_AUC Score = 0.9507**
+
+ROC Curves for Model 2
+------
+
+- Training Set ROC Curve vs Test Set ROC Curve
+![ROC_ModelUnsup2_BP](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/ROC_ModelUnsup2_BP.png)
+
+*Note: Predictions on the test set are made using the union of the predictions on the vertically-enhanced spectrograms and horizontally-enhanced spectrograms (BP=Both Predictions).*
+
+- Test Set ROC Curves
+
+![ROC_ModelUnsup2_TestOnly](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/ROC_ModelUnsup2_TestOnly.png)
+
+*Note: The three curves represent predictions only on the vertically-enhanced spectrograms in the test set (VP=Vertically-Enhanced Predictions, predictions only on the horizontally-enhanced spectrograms in the test set (HP=Horizontally-Enhanced Predictions), and the union of the predictions on both types of images (BP=Both Predictions).*
+
+- Training Set ROC Curve vs Test Set ROC Curves
+
+![ROC_ModelUnsup2_All](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/ROC_ModelUnsup2_All.png)
+
+Conclusions
+=========================
+
+Model 1 and Model 2 did not achieve higher AUC scores on the test set (**93.13%** and **95.07%** respectively) conpared to the Baseline Model (**98.29%**) as desired. In particular, the complexity of Model1's architecture, resulting higher computational and memory costs, and poorer performance disqualified it from further analysis. Model 2, however, showed promise in the simplicity of its unsupervised approach to learning convolutional filters and, with further hyperparameter tuning, Model 2's performance could be optimized to surpass that of the Baseline Model. At this stage, however, the Baseline Model has the advantage of faster training time, simple (standard) CNN architecture (easy implementation), and higher AUC score performance. 
+
+Appendix: Filter Visualization (0th Layer)
+=========================
+
+The filters of the 0th convolutional layer in CNNs (applied to the raw input images) are often "human-interpretable" and have patterns that are easy to correlate with patterns of the input images. Both Model 1 and Model 2 learn the same number of filters (256) in the same manner via K-Means for the 0th layer. Examine a visualization of these filters in the grid below:
+
+![filters_unsup](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/filters_unsup.png)
+
+*Note: Many patches appear to have patterns from the higher-intensity, brightly yellow-colored areas of the spectrogram containing a right whale upcall, and are similar in appearance to the filters learned by the [Baseline Model](https://github.com/cchinchristopherj/Right-Whale-Convolutional-Neural-Network). Note, however, that K-Means learned filters using an equal number of samples from the positive class (right whale upcall) and negative class (ambient noise), resulting in patches representative of both types of images. (Including samples from both classes, as opposed to just including samples from the positive class, was found to boost classifier performance). Therefore, the brightly-colored areas of the filters could be interpreted as either high-intensity regions corresponding to an upcall, or high-intensity regions corresponding to blips of random noise.*
+
+*As a final note, recall that these filters/centroids are learned from PCA-whitened patches of contrast-enhanced spectrogram images, thereby precluding direct comparison between patterns in the spectrogram images and patterns in the filters.* 
+
+Modules and Installation Instructions
+=========================
+
+**"Standard" Modules Used (Included in Anaconda Distribution):** numpy, matplotlib, pylab, glob, aifc, os
+
+If necessary, these modules can also be installed via PyPI. For example, for the "numpy" module: 
+
+        pip install numpy
+
+**Additional Modules used:** skimage, sklearn, keras
+
+skimage and sklearn can be installed via PyPI. For example, for the "scikit-image" module:
+
+        pip install scikit-image
+
+For Keras, follow the instructions given in the [documentation](https://keras.io/#installation). Specifically, install the TensorFlow backend and, of the optional dependencies, install HDF5 and h5py if you would like to load and save your Keras models. 
 
 Correct Usage
 =========================
@@ -85,123 +189,6 @@ or:
 This constructs the CNN model architectures of Model 1 or Model 2, respectively, trains the filters unsupervised via K-Means, and trains the weights on the dataset. This trained model can be saved to your computer using the command:
 
     model.save('model.h5')  
-    
-Filter Visualization (0th Layer)
-=========================
-
-The filters of the 0th convolutional layer in CNNs (applied to the raw input images) are often "human-interpretable" and have patterns that are easy to correlate with patterns of the input images. Both Model 1 and Model 2 learn the same number of filters (256) in the same manner via K-Means for the 0th layer. Examine a visualization of these filters in the grid below:
-
-![filters_unsup](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/filters_unsup.png)
-
-*Note: Many patches appear to have patterns from the higher-intensity, brightly yellow-colored areas of the spectrogram containing a right whale upcall. Note, however, that K-Means learned filters using an equal number of samples from the positive class (right whalle upcall) and negative class (ambient noise), resulting in patches representative of both types of images. (Including samples from both classes, as opposed to just including samples from the positive class, was found to boost classifier performance). Therefore, the brightly-colored areas of the filters could be interpreted as either high-intensity regions corresponding to an upcall, or high-intensity regions corresponding to blips of random noise.* 
-
-Results of Training for Model 1
-=========================
-
-Model 1 was trained for 17 epochs and a batch size of 100 on a training set of 84000 audio files (42000 vertically-enhanced spectrograms and 42000 horizontally-enhanced spectrograms). Training took approximately 4 hours on a Tesla K80 GPU (via FloydHub Cloud Service). The test set consisted of 10000 audio files (5000 vertically-enhanced spectrograms and 5000 horizontally-enhanced spectrograms). The loss and accuracy of the training set, and ROC-AUC score of the test set, are evaluated by Keras for every epoch during training and depicted below. The final ROC-AUC score for the training set after 17 epochs was found to be 94.14%, while the ROC-AUC score for the test set was found to be 93.13%.
-
-- ROC-AUC Score vs Epoch (Graph)
-
-![AUC-Epoch_ModelUnsup1](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/AUC-Epoch_ModelUnsup1.png)
-
-- ROC-AUC Score vs Epoch (Table)
-
-| Epoch                 | Loss        | Accuracy    | ROC-AUC     | 
-|-----------------------|-------------|-------------|-------------|
-| 1/17                  | 0.2438      | 0.9219      | 0.9020      | 
-| 2/17                  | 0.2095      | 0.9326      | 0.9150      | 
-| 3/17                  | 0.2040      | 0.9340      | 0.9144      | 
-| 4/17                  | 0.2018      | 0.9346      | 0.9078      | 
-| 5/17                  | 0.1998      | 0.9351      | 0.9269      | 
-| 6/17                  | 0.1969      | 0.9360      | 0.9134      | 
-| 7/17                  | 0.1959      | 0.9360      | 0.8939      | 
-| 8/17                  | 0.1934      | 0.9362      | 0.9277      | 
-| 9/17                  | 0.1939      | 0.9361      | 0.9044      | 
-| 10/17                 | 0.1918      | 0.9365      | 0.9256      | 
-| 11/17                 | 0.1931      | 0.9360      | 0.9320      | 
-| 12/17                 | 0.1904      | 0.9363      | 0.9226      | 
-| 13/17                 | 0.1897      | 0.9370      | 0.9127      | 
-| 14/17                 | 0.1875      | 0.9362      | 0.9307      | 
-| 15/17                 | 0.1898      | 0.9363      | 0.9278      | 
-| 16/17                 | 0.1895      | 0.9367      | 0.9316      | 
-| 17/17                 | 0.1874      | 0.9370      | 0.9044      | 
-
-**Test ROC_AUC Score = 0.9313**
-
-ROC Curves for Model 1
-------
-
-- Training Set ROC Curve vs Test Set ROC Curve
-![ROC_ModelUnsup1_BP](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/ROC_ModelUnsup1_BP.png)
-
-*Note: Predictions on the test set are made using the union of the predictions on the vertically-enhanced spectrograms and horizontally-enhanced spectrograms (BP=Both Predictions).*
-
-- Test Set ROC Curves
-
-![ROC_ModelUnsup1_TestOnly](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/ROC_ModelUnsup1_TestOnly.png)
-
-*Note: The three curves represent predictions only on the vertically-enhanced spectrograms in the test set (VP=Vertically-Enhanced Predictions, predictions only on the horizontally-enhanced spectrograms in the test set (HP=Horizontally-Enhanced Predictions), and the union of the predictions on both types of images (BP=Both Predictions).*
-
-- Training Set ROC Curve vs Test Set ROC Curves
-
-![ROC_ModelUnsup1_All](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model1/ROC_ModelUnsup1_All.png)
-
-Results of Training for Model 2
-=========================
-
-Model 2 was trained for 16 epochs and a batch size of 100 on a training set of 84000 audio files (42000 vertically-enhanced spectrograms and 42000 horizontally-enhanced spectrograms). Training took approximately 50 minutes on a Tesla K80 GPU (via FloydHub Cloud Service). The test set consisted of 10000 audio files (5000 vertically-enhanced spectrograms and 5000 horizontally-enhanced spectrograms). The loss and accuracy of the training set, and ROC-AUC score of the test set, are evaluated by Keras for every epoch during training and depicted below. The final ROC-AUC score for the training set after 16 epochs was found to be 96.07%, while the ROC-AUC score for the test set was found to be 95.97%.
-
-- ROC-AUC Score vs Epoch (Graph)
-
-![AUC-Epoch_ModelUnsup2](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/AUC-Epoch_ModelUnsup2.png)
-
-- ROC-AUC Score vs Epoch (Table)
-
-| Epoch                 | Loss        | Accuracy    | ROC-AUC     | 
-|-----------------------|-------------|-------------|-------------|
-| 1/16                  | 0.2313      | 0.9210      | 0.9354      | 
-| 2/16                  | 0.1953      | 0.9303      | 0.9370      | 
-| 3/16                  | 0.1870      | 0.9314      | 0.9420      | 
-| 4/16                  | 0.1802      | 0.9330      | 0.9439      | 
-| 5/16                  | 0.1768      | 0.9339      | 0.9368      | 
-| 6/16                  | 0.1728      | 0.9339      | 0.9405      | 
-| 7/16                  | 0.1720      | 0.9339      | 0.9419      | 
-| 8/16                  | 0.1710      | 0.9344      | 0.9472      | 
-| 9/16                  | 0.1686      | 0.9349      | 0.9383      | 
-| 10/16                 | 0.1661      | 0.9357      | 0.9491      | 
-| 11/16                 | 0.1650      | 0.9364      | 0.9375      | 
-| 12/16                 | 0.1636      | 0.9378      | 0.9476      | 
-| 13/16                 | 0.1623      | 0.9423      | 0.9395      | 
-| 14/16                 | 0.1597      | 0.9414      | 0.9437      | 
-| 15/16                 | 0.1594      | 0.9421      | 0.9433      | 
-| 16/16                 | 0.1592      | 0.9423      | 0.9411      | 
-
-**Test ROC_AUC Score = 0.9507**
-
-ROC Curves for Model 2
-------
-
-- Training Set ROC Curve vs Test Set ROC Curve
-![ROC_ModelUnsup2_BP](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/ROC_ModelUnsup2_BP.png)
-
-*Note: Predictions on the test set are made using the union of the predictions on the vertically-enhanced spectrograms and horizontally-enhanced spectrograms (BP=Both Predictions).*
-
-- Test Set ROC Curves
-
-![ROC_ModelUnsup2_TestOnly](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/ROC_ModelUnsup2_TestOnly.png)
-
-*Note: The three curves represent predictions only on the vertically-enhanced spectrograms in the test set (VP=Vertically-Enhanced Predictions, predictions only on the horizontally-enhanced spectrograms in the test set (HP=Horizontally-Enhanced Predictions), and the union of the predictions on both types of images (BP=Both Predictions).*
-
-- Training Set ROC Curve vs Test Set ROC Curves
-
-![ROC_ModelUnsup2_All](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/Model2/ROC_ModelUnsup2_All.png)
-
-All Models: ROC-AUC Scores vs Epoch
-=========================
-
-![AUC-Epoch_All](https://github.com/cchinchristopherj/Right-Whale-Unsupervised-Model/blob/master/Images/AUC-Epoch_All.png)
-
-*Note: The three curves represent the ROC-AUC scores vs epoch for the supervised CNN, the unsupervised CNN using energy-correlated receptive field grouping, and the unsupervised CNN using 1x1 convolution dimensionality reduction, respectively.*
 
 References
 =========================
